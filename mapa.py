@@ -3,7 +3,7 @@ import pandas as pd
 import pydeck as pdk
 import time  # <--- Necesario para la animación
 
-# --- 1. CONFIGURACIÓN DE NOMBRES DE COLUMNAS (Tus nombres correctos) ---
+# --- 1. CONFIGURACIÓN DE NOMBRES DE COLUMNAS ---
 COL_LAT = "Coordy"
 COL_LON = "Coordx"
 COL_TIMESTAMP = "timestamp" 
@@ -15,18 +15,18 @@ st.title("Mapa de Calor - Simulación Automática")
 # --- 2. CARGA DE DATOS ---
 @st.cache_data
 def cargar_datos():
-    # Carga el archivo dataset2024.csv
+
     df = pd.read_csv("dataset2024.csv", encoding="ISO-8859-1")
     
-    # Limpieza de coordenadas
+   
     df[COL_LON] = pd.to_numeric(df[COL_LON], errors="coerce")
     df[COL_LAT] = pd.to_numeric(df[COL_LAT], errors="coerce")
     df = df.dropna(subset=[COL_LON, COL_LAT])
     
-    # Conversión de fecha
+  
     df['fecha_hora_dt'] = pd.to_datetime(df[COL_TIMESTAMP])
     
-    # Ordenamos por tiempo y luego por ID para la secuencia correcta
+    
     df = df.sort_values(by=['fecha_hora_dt', COL_ID])
     
     return df
@@ -52,8 +52,7 @@ def asignar_color(val):
 df['color_rgb'] = df[COL_INDICADOR].apply(asignar_color)
 
 # --- 4. PREPARACIÓN DE LA VISTA ---
-# Definimos la vista inicial (fija) usando el promedio de TODOS los datos.
-# Esto evita que la cámara "salte" en cada segundo.
+
 view_state = pdk.ViewState(
     latitude=df[COL_LAT].mean(),
     longitude=df[COL_LON].mean(),
@@ -61,15 +60,15 @@ view_state = pdk.ViewState(
     pitch=0,
 )
 
-# Obtenemos la lista de tiempos únicos para recorrerlos
+
 tiempos_unicos = df['fecha_hora_dt'].unique()
 
 # --- 5. VISUALIZACIÓN AUTOMÁTICA ---
 
-# Usamos un botón para iniciar en lugar del slider
+
 if st.button("▶️ Iniciar Simulación"):
     
-    # Contenedores vacíos para actualizar el contenido dinámicamente
+    
     texto_status = st.empty()
     mapa_placeholder = st.empty()
     barra_progreso = st.progress(0)
@@ -79,10 +78,9 @@ if st.button("▶️ Iniciar Simulación"):
     # BUCLE DE ANIMACIÓN
     for i, hora_actual in enumerate(tiempos_unicos):
         
-        # A) Filtramos los datos de este segundo exacto
+        
         batch = df[df['fecha_hora_dt'] == hora_actual]
         
-        # B) Actualizamos el texto con la fecha y hora
         fecha_str = pd.to_datetime(hora_actual).strftime('%Y-%m-%d')
         hora_str = pd.to_datetime(hora_actual).strftime('%H:%M:%S')
         
@@ -90,7 +88,6 @@ if st.button("▶️ Iniciar Simulación"):
         ### 📅 Fecha: **{fecha_str}** ### ⏰ Hora: **{hora_str}**
         """)
 
-        # C) Creamos la capa con los datos del momento
         layer = pdk.Layer(
             "ScatterplotLayer",
             data=batch,
@@ -110,8 +107,6 @@ if st.button("▶️ Iniciar Simulación"):
             "style": {"backgroundColor": "black", "color": "white"}
         }
 
-        # D) Renderizamos el mapa dentro del contenedor vacío
-        # Aquí incluimos tu API Key y el estilo oscuro
         mapa_placeholder.pydeck_chart(pdk.Deck(
             api_keys={"mapbox": "pk.eyJ1IjoibHVpc3JuYXYiLCJhIjoiY21pcDlyZTgwMGI0bDNrb3ZrcnJtbmNhdSJ9.CoAnz8VfHwEaK-88Oa9MVg"},
             map_style='mapbox://styles/mapbox/dark-v10',  # Estilo oscuro
@@ -120,9 +115,8 @@ if st.button("▶️ Iniciar Simulación"):
             tooltip=tooltip
         ))
         
-        # E) Actualizamos barra y esperamos
         barra_progreso.progress((i + 1) / total_pasos)
-        time.sleep(1) # Espera 1 segundo entre cuadros
+        time.sleep(1) 
 
     st.success("Simulación finalizada.")
 
